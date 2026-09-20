@@ -12,6 +12,7 @@ on:
 
 jobs:
   resolve-release:
+    if: github.repository == 'edde746/plezy'
     runs-on: ubuntu-latest
     permissions:
       contents: read
