@@ -1,6 +1,8 @@
 import 'dart:io' show Platform;
 
 import '../../media/playback_rate.dart';
+import '../../utils/platform_detector.dart';
+import 'platform/player_tizen.dart';
 import '../models.dart';
 import 'audio_rendering_mode.dart';
 import 'platform/player_android.dart';
@@ -382,6 +384,7 @@ abstract class Player {
   /// software ones, where DV reshaping can actually happen (see
   /// MpvPlayerCore.initialVideoOutput; #2010).
   factory Player({bool? useExoPlayer, bool hardwareDecoding = true}) {
+    if (PlatformDetector.isTizen()) return PlayerTizen();
     if (Platform.isAndroid) {
       // Default to MPV on Android, with ExoPlayer as the opt-in alternative.
       // The caller should pass useExoPlayer based on SettingsService.useExoPlayer.
@@ -415,6 +418,7 @@ abstract class Player {
   /// `PlaybackCoordinator`), and the video core only exists while the video
   /// player screen is open.
   factory Player.audio() {
+    if (PlatformDetector.isTizen()) return PlayerTizen(audioOnly: true);
     if (Platform.isAndroid || Platform.isMacOS || Platform.isIOS || Platform.isWindows || Platform.isLinux) {
       return PlayerNative.audio();
     }
