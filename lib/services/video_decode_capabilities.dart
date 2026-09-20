@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../utils/async_singleton.dart';
 import '../utils/device_channel.dart';
+import '../utils/platform_detector.dart';
 
 /// Whether this device has a hardware decoder for HEVC and AV1.
 ///
@@ -36,6 +37,7 @@ class VideoDecodeCapabilities {
       _singleton.getInstance(VideoDecodeCapabilities._, (instance) => instance._detect());
 
   Future<void> _detect() async {
+    if (PlatformDetector.isTizen()) return;
     try {
       final result = await deviceChannel.invokeMapMethod<String, dynamic>('getVideoDecodeCapabilities');
       if (result == null) return;
@@ -49,15 +51,16 @@ class VideoDecodeCapabilities {
   }
 
   /// Whether HEVC should be advertised to a media server. Safe before init.
-  static bool get supportsHevc => _singleton.instance?._hardwareHevc ?? true;
+  static bool get supportsHevc => !PlatformDetector.isTizen() && (_singleton.instance?._hardwareHevc ?? true);
 
   /// Whether AV1 should be advertised to a media server. Safe before init.
-  static bool get supportsAv1 => _singleton.instance?._hardwareAv1 ?? true;
+  static bool get supportsAv1 => !PlatformDetector.isTizen() && (_singleton.instance?._hardwareAv1 ?? true);
 
   /// One-line summary for the startup log and bug-report headers, e.g.
   /// `hevc=hw av1=none` on an Apple TV 4K, or `unprobed` on desktop. Answers
   /// "did this device really report an AV1 decoder" when a transcode stutters.
   static String describeSync() {
+    if (PlatformDetector.isTizen()) return 'unprobed; conservative H.264/AAC policy';
     final instance = _singleton.instance;
     if (instance == null) return 'unknown';
     final hevc = instance._hardwareHevc;
