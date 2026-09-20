@@ -180,7 +180,10 @@ def main() -> None:
     spec = json.loads(SPEC_PATH.read_text(encoding="utf-8"))
     dart_output = dart_source(spec)
     go_output = go_source(spec)
-    DART_PATH.write_text(dart_output, encoding="utf-8", newline="\n")
+    # The Tizen SDK's focal environment uses Python 3.8. Path.write_text
+    # gained its newline argument in 3.10; open preserves the same LF output.
+    with DART_PATH.open("w", encoding="utf-8", newline="\n") as target:
+        target.write(dart_output)
     GO_PATH.write_text(go_output, encoding="utf-8")
 
 
