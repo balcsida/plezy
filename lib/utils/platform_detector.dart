@@ -214,9 +214,18 @@ class TvDetectionService {
 }
 
 class PlatformDetector {
+  // The embedder may identify as Linux; OS checks alone must not select mpv
+  // or desktop plugins. All supported Tizen entrypoints supply this define.
+  static const bool _tizen = bool.fromEnvironment('TIZEN_BUILD');
+  static bool isTizen() => _tizen;
+
   static bool isTV() {
-    return TvDetectionService.isTVSync();
+    return _tizen || TvDetectionService.isTVSync();
   }
+
+  static bool supportsDownloads() => !_tizen;
+  static bool supportsGamepads() => !_tizen;
+  static bool supportsSystemMediaControls() => !_tizen;
 
   static bool isAppleTV() {
     return TvDetectionService.isAppleTVSync();
@@ -275,7 +284,7 @@ class PlatformDetector {
   /// BuildContext. Use for OS-level capability checks (window state, native
   /// keyboard, etc.); use [isDesktop] for layout decisions.
   static bool isDesktopOS() {
-    return _debugIsDesktopOSOverride ?? (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+    return !_tizen && (_debugIsDesktopOSOverride ?? (Platform.isWindows || Platform.isMacOS || Platform.isLinux));
   }
 
   static bool? _debugIsDesktopOSOverride;
@@ -311,7 +320,7 @@ class PlatformDetector {
   }
 
   static bool supportsExternalPlayers() {
-    if (isAppleTV()) return false;
+    if (isAppleTV() || _tizen) return false;
     return Platform.isAndroid || Platform.isIOS || Platform.isMacOS || Platform.isLinux || Platform.isWindows;
   }
 
@@ -325,7 +334,7 @@ class PlatformDetector {
     // bitstream substreams — which Mac setups essentially never have — and with a
     // restricted ao list mpv has no PCM fallback, so a failed AO init stalls
     // playback with no audio at all (#1964).
-    return isAppleTV() || Platform.isWindows || Platform.isLinux || (Platform.isAndroid && isTV());
+    return !_tizen && (isAppleTV() || Platform.isWindows || Platform.isLinux || (Platform.isAndroid && isTV()));
   }
 
   static bool supportsPictureInPicture() => pictureInPictureAllowed(

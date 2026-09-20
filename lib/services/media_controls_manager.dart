@@ -8,6 +8,7 @@ import '../media/media_item.dart';
 import '../media/media_item_types.dart';
 import '../media/media_kind.dart';
 import '../utils/app_logger.dart';
+import '../utils/platform_detector.dart';
 
 /// Manages OS media controls integration for video playback.
 ///
@@ -18,7 +19,8 @@ import '../utils/app_logger.dart';
 /// - Position update throttling to prevent excessive API calls
 class MediaControlsManager {
   /// Stream of control events from OS media controls
-  Stream<MediaControlEvent> get controlEvents => OsMediaControls.controlEvents;
+  Stream<MediaControlEvent> get controlEvents =>
+      PlatformDetector.supportsSystemMediaControls() ? OsMediaControls.controlEvents : const Stream.empty();
 
   /// Throttled playback state update (1 second interval, leading + trailing)
   late final Throttle _throttledUpdate;
@@ -32,7 +34,7 @@ class MediaControlsManager {
   bool? _lastCanSkip;
   bool? _lastCanSetSpeed;
   Duration? _lastSkipInterval;
-  bool _updatesSuspended = false;
+  bool _updatesSuspended = !PlatformDetector.supportsSystemMediaControls();
 
   MediaControlsManager() {
     _throttledUpdate = throttle(
@@ -222,6 +224,7 @@ class MediaControlsManager {
   /// keeps audio alive with a `mediaPlayback` foreground service and shows a
   /// MediaStyle notification for the session. No-op on other platforms.
   Future<void> setBackgroundMode(bool enabled) async {
+    if (!PlatformDetector.supportsSystemMediaControls()) return;
     try {
       await OsMediaControls.setBackgroundMode(enabled);
       appLogger.d('Media controls background mode: $enabled');
@@ -234,6 +237,7 @@ class MediaControlsManager {
   ///
   /// Should be called when playback stops or screen is disposed.
   Future<void> clear() async {
+    if (!PlatformDetector.supportsSystemMediaControls()) return;
     try {
       await OsMediaControls.clear();
       _throttledUpdate.cancel();
@@ -259,6 +263,7 @@ class MediaControlsManager {
   }
 
   void resumeUpdates() {
+    if (!PlatformDetector.supportsSystemMediaControls()) return;
     if (!_updatesSuspended) return;
     _updatesSuspended = false;
     appLogger.d('Media controls updates resumed');
