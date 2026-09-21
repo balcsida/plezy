@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/mpv/mpv.dart';
 import 'package:plezy/widgets/video_controls/widgets/performance_overlay/performance_stats.dart';
 import 'package:plezy/widgets/video_controls/widgets/performance_overlay/performance_stats_service.dart';
@@ -290,6 +291,33 @@ void main() {
       final stats = await _firstStats(_PropertyPlayer({'frame-drop-count': '3'}));
 
       expect(stats.droppedFramesFormatted, '3');
+    });
+  });
+
+  group('a backend that decodes outside the app', () {
+    test('Tizen reports itself, not ExoPlayer', () async {
+      final stats = await _firstStats(
+        _NativeStatsPlayer({'playerType': 'tizen', 'videoWidth': 1920, 'videoHeight': 1080}),
+      );
+
+      expect(stats.playerType, 'tizen');
+      expect(stats.playerTypeFormatted, 'Tizen');
+      expect(stats.videoWidth, 1920);
+      // Falling through to the ExoPlayer parse used to invent these.
+      expect(stats.videoDecoderName, isNull);
+    });
+
+    test('no hwdec signal reads as unavailable, never as software', () {
+      // The Capi plane exposes no hwdec state. Claiming software decoding
+      // there asserts a measurement nobody took.
+      const stats = PerformanceStats(playerType: 'tizen');
+      expect(stats.hwdecFormatted, isNot(t.performanceOverlay.decoderSoftware));
+      expect(stats.hwdecFormatted, t.common.notAvailable);
+    });
+
+    test("mpv's own 'no' is still real evidence of software decoding", () {
+      const stats = PerformanceStats(playerType: 'mpv', hwdecCurrent: 'no');
+      expect(stats.hwdecFormatted, t.performanceOverlay.decoderSoftware);
     });
   });
 }
