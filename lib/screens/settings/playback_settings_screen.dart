@@ -41,7 +41,10 @@ class PlaybackSettingsScreen extends StatelessWidget {
       builder: (context) {
         final svc = SettingsService.instance;
         final exoActive = Platform.isAndroid && svc.read(SettingsService.useExoPlayer);
-        final downmixOn = svc.read(SettingsService.audioDownmix);
+        // Tizen drives the native Capi backend, so every mpv-only tuning tile
+        // below points at a property that platform cannot accept.
+        final mpvTuning = PlatformDetector.supportsMpvTuning();
+        final downmixOn = mpvTuning && svc.read(SettingsService.audioDownmix);
         final showDisplaySwitchDelay =
             PlatformDetector.isAppleTV() ||
             (Platform.isWindows &&
@@ -57,8 +60,8 @@ class PlaybackSettingsScreen extends StatelessWidget {
               children: [
                 if (Platform.isAndroid) _playerBackendSelector(),
                 if (PlatformDetector.supportsExternalPlayers()) _externalPlayerTile(),
-                if (!exoActive) _mpvConfigTile(),
-                _hardwareDecodingTile(),
+                if (!exoActive && mpvTuning) _mpvConfigTile(),
+                if (mpvTuning) _hardwareDecodingTile(),
                 if (exoActive) _playbackBufferTile(),
                 if (exoActive) _tunneledPlaybackTile(),
                 if (PlatformDetector.supportsPictureInPicture()) _autoPipTile(),
@@ -76,7 +79,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
                 if (Platform.isAndroid) _dvConversionModeTile(),
                 // mpv-only (#2149): ExoPlayer has no filter chain, so the
                 // tile disappears while the ExoPlayer backend is active.
-                if (!exoActive) _deinterlaceTile(),
+                if (!exoActive && mpvTuning) _deinterlaceTile(),
                 // TODO: "Extend video into display cutout" toggle (#1769)
                 // goes here, Android-only.
               ],
@@ -86,10 +89,10 @@ class PlaybackSettingsScreen extends StatelessWidget {
               title: t.settings.audio,
               children: [
                 if (PlatformDetector.supportsAudioPassthrough()) _audioPassthroughTile(),
-                _audioDownmixTile(),
+                if (mpvTuning) _audioDownmixTile(),
                 if (downmixOn) _downmixCenterBoostTile(),
                 if (downmixOn) _downmixNormalizeTile(),
-                _maxVolumeTile(),
+                if (mpvTuning) _maxVolumeTile(),
               ],
             ),
 

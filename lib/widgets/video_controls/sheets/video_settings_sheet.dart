@@ -839,32 +839,37 @@ class _VideoSettingsSheetState extends State<VideoSettingsSheet> {
         // "not Dolby" when the system reports notApplicable.
         if (PlatformDetector.isAppleTV()) _AudioRenderingModeItem(player: widget.player),
 
-        _SettingsToggleItem(
-          pref: SettingsService.audioNormalization,
-          icon: Symbols.graphic_eq_rounded,
-          title: t.videoSettings.audioNormalization,
-          // Normalization wins over passthrough; say so where passthrough
-          // exists. Android also folds the track to stereo ahead of loudnorm
-          // (PlayerBase._loudnormFilter), which a surround owner must hear
-          // about before flipping it.
-          subtitle: PlatformDetector.supportsAudioPassthrough()
-              ? Platform.isAndroid
-                    ? t.videoSettings.audioNormalizationStereoMix
-                    : t.videoSettings.audioNormalizationDisablesPassthrough
-              : null,
-          onAfterWrite: widget.player.setAudioNormalization,
-        ),
-
-        _SettingsToggleItem(
-          pref: SettingsService.audioDownmix,
-          icon: Symbols.headphones_rounded,
-          title: t.videoSettings.audioDownmix,
-          onAfterWrite: (enabled) => widget.player.setAudioDownmix(
-            enabled: enabled,
-            centerBoostDb: SettingsService.instance.read(SettingsService.downmixCenterBoost),
-            normalize: SettingsService.instance.read(SettingsService.audioDownmixNormalize),
+        // Both audio filters go through mpv's `af`/swresample options, which
+        // PlayerTizen rejects: the write throws, is logged, and the switch
+        // snaps back. Do not offer a control that cannot hold its value.
+        if (PlatformDetector.supportsMpvTuning()) ...[
+          _SettingsToggleItem(
+            pref: SettingsService.audioNormalization,
+            icon: Symbols.graphic_eq_rounded,
+            title: t.videoSettings.audioNormalization,
+            // Normalization wins over passthrough; say so where passthrough
+            // exists. Android also folds the track to stereo ahead of loudnorm
+            // (PlayerBase._loudnormFilter), which a surround owner must hear
+            // about before flipping it.
+            subtitle: PlatformDetector.supportsAudioPassthrough()
+                ? Platform.isAndroid
+                      ? t.videoSettings.audioNormalizationStereoMix
+                      : t.videoSettings.audioNormalizationDisablesPassthrough
+                : null,
+            onAfterWrite: widget.player.setAudioNormalization,
           ),
-        ),
+
+          _SettingsToggleItem(
+            pref: SettingsService.audioDownmix,
+            icon: Symbols.headphones_rounded,
+            title: t.videoSettings.audioDownmix,
+            onAfterWrite: (enabled) => widget.player.setAudioDownmix(
+              enabled: enabled,
+              centerBoostDb: SettingsService.instance.read(SettingsService.downmixCenterBoost),
+              normalize: SettingsService.instance.read(SettingsService.audioDownmixNormalize),
+            ),
+          ),
+        ],
 
         // Shader Preset (MPV only)
         if (_state.shaderService != null && _state.shaderService!.isSupported)
