@@ -49,6 +49,9 @@ class PlaybackSettingsScreen extends StatelessWidget {
         // (and shows) as Original there.
         final storedChannelLimit = svc.read(SettingsService.audioChannelLimit);
         final channelLimit = exoActive ? storedChannelLimit.onExoPlayer : storedChannelLimit;
+        // Tizen drives the native Capi backend, so every mpv-only tuning tile
+        // below points at a property that platform cannot accept.
+        final mpvTuning = PlatformDetector.supportsMpvTuning();
         final showDisplaySwitchDelay =
             PlatformDetector.isAppleTV() ||
             (Platform.isWindows &&
@@ -64,8 +67,8 @@ class PlaybackSettingsScreen extends StatelessWidget {
               children: [
                 if (Platform.isAndroid) _playerBackendSelector(),
                 if (PlatformDetector.supportsExternalPlayers()) _externalPlayerTile(),
-                if (!exoActive) _mpvConfigTile(),
-                _hardwareDecodingTile(),
+                if (!exoActive && mpvTuning) _mpvConfigTile(),
+                if (mpvTuning) _hardwareDecodingTile(),
                 if (exoActive) _playbackBufferTile(),
                 if (exoActive) _tunneledPlaybackTile(),
                 if (PlatformDetector.supportsPictureInPicture()) _autoPipTile(),
@@ -85,7 +88,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
                 if (Platform.isAndroid && !exoActive) _hdrSdrConversionTile(),
                 // mpv-only (#2149): ExoPlayer has no filter chain, so the
                 // tile disappears while the ExoPlayer backend is active.
-                if (!exoActive) _deinterlaceTile(),
+                if (!exoActive && mpvTuning) _deinterlaceTile(),
                 // TODO: "Extend video into display cutout" toggle (#1769)
                 // goes here, Android-only.
               ],
@@ -95,11 +98,11 @@ class PlaybackSettingsScreen extends StatelessWidget {
               title: t.settings.audio,
               children: [
                 if (PlatformDetector.supportsAudioPassthrough()) _audioPassthroughTile(),
-                _audioChannelLimitTile(exoActive: exoActive),
+                if (mpvTuning) _audioChannelLimitTile(exoActive: exoActive),
                 // Only a stereo fold mixes the center away; any fold can clip.
-                if (channelLimit == AudioChannelLimit.stereo) _downmixCenterBoostTile(),
-                if (channelLimit != AudioChannelLimit.original) _downmixNormalizeTile(),
-                _maxVolumeTile(),
+                if (mpvTuning && channelLimit == AudioChannelLimit.stereo) _downmixCenterBoostTile(),
+                if (mpvTuning && channelLimit != AudioChannelLimit.original) _downmixNormalizeTile(),
+                if (mpvTuning) _maxVolumeTile(),
               ],
             ),
 
