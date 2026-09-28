@@ -395,10 +395,7 @@ extension _VideoPlayerLifecycleMethods on VideoPlayerScreenState {
       appLogger.w('TV background suspend restore: in-place reload failed');
       // Nothing was opened, so no player error follows: the server was not
       // reachable yet. Without this the screen is left on a released player.
-      if (_canReconnect) {
-        _latchFatalPlaybackError(PlaybackFailureAction.reconnect);
-        _awaitReconnect();
-      }
+      if (PlatformDetector.isTizen()) _reconnectAfterUnopenedReload(outcome);
     }
   }
 }
