@@ -26,6 +26,9 @@ enum PlaybackFailureAction {
   /// Live ladder is exhausted and its last retry failed.
   liveInterrupted,
 
+  /// Reopen the item on the bounded `PlaybackReconnect` schedule.
+  reconnect,
+
   /// Show the raw player error and leave the route.
   fatal,
 }
@@ -58,6 +61,9 @@ enum PlaybackFailureAction {
 /// status and no device fault, so they take the default path like any other
 /// failed open: live TV climbs its ladder (a different stream may well decode),
 /// on-demand playback is fatal.
+///
+/// [canReconnect] is the caller's verdict that a reopen may recover this
+/// failure. It never outranks a status a reopen cannot change.
 PlaybackFailureAction resolvePlaybackFailureAction({
   required String? cause,
   required Set<int> fatalHttpStatuses,
@@ -65,6 +71,7 @@ PlaybackFailureAction resolvePlaybackFailureAction({
   required bool liveRetrying,
   required int liveFallbackLevel,
   required bool liveRetryFailed,
+  bool canReconnect = false,
 }) {
   if (cause == PlayerError.audioOutputFailed) return PlaybackFailureAction.fatal;
 
@@ -81,6 +88,8 @@ PlaybackFailureAction resolvePlaybackFailureAction({
   if (!isLive && cause == PlayerError.serverHttp503) {
     return PlaybackFailureAction.serverBusyDialog;
   }
+
+  if (!isLive && canReconnect) return PlaybackFailureAction.reconnect;
 
   if (isLive) {
     if (liveRetrying) return PlaybackFailureAction.ignore;
