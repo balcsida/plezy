@@ -52,6 +52,7 @@ extension _VideoPlayerReloadMethods on VideoPlayerScreenState {
     if (widget.isLive && !isLiveSubtitleSwitch) return PlaybackSourceChangeOutcome.unavailable;
     final transitionLease = _transitionGate.tryAcquire(PlaybackTransition.switchingSource);
     if (transitionLease == null) return PlaybackSourceChangeOutcome.busy;
+    _sourceSwitchInFlight = true;
     try {
       if (isLiveSubtitleSwitch) return await _switchLiveSubtitle(newSubtitleChoice);
       return await _performPlaybackSourceSwitch(
@@ -63,6 +64,7 @@ extension _VideoPlayerReloadMethods on VideoPlayerScreenState {
         newSubtitleChoice: newSubtitleChoice,
       );
     } finally {
+      _sourceSwitchInFlight = false;
       _transitionGate.release(transitionLease);
     }
   }
