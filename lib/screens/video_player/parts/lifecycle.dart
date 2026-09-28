@@ -423,10 +423,6 @@ extension _VideoPlayerLifecycleMethods on VideoPlayerScreenState {
       // Nothing was opened, so no player error follows: the server was not
       // reachable yet. Without this the screen is left on a released player.
       if (PlatformDetector.isTizen()) _reconnectAfterUnopenedReload(outcome);
-    } else if (outcome == MediaReloadOutcome.opened && startPaused && PlatformDetector.isTizen()) {
-      // A Tizen player that has not started draws nothing: without the
-      // controls a paused rebuild is an empty screen.
-      _chromeController.show(focusPlayPause: true);
     }
   }
 }
