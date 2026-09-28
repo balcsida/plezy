@@ -1260,10 +1260,6 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
   @visibleForTesting
   bool get debugPlayerUiReadyForTesting => _firstFrame.uiReady.value;
 
-  /// What [WakeDetector] does when the clocks drift apart.
-  @visibleForTesting
-  void debugWakeForTesting() => _onWakeWithoutLifecycle();
-
   @visibleForTesting
   Future<void> debugSeekPlaybackForTesting(Duration position) => _seekPlayback(position);
 
