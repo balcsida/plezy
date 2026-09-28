@@ -378,12 +378,20 @@ extension _VideoPlayerLifecycleMethods on VideoPlayerScreenState {
       preservedSubtitleTrack: SubtitlePreference.trackOrNull(restore.subtitleTrack),
       preservedSecondarySubtitleTrack: SubtitlePreference.trackOrNull(restore.secondarySubtitleTrack),
       startPaused: true,
+      // On Tizen a failed restore is retried, not announced.
+      showErrorUi: !PlatformDetector.isTizen(),
       reason: 'TV background suspend restore',
     );
     if (outcome == MediaReloadOutcome.rejected) {
       appLogger.w('TV background suspend restore: in-place reload rejected');
     } else if (outcome == MediaReloadOutcome.failed) {
       appLogger.w('TV background suspend restore: in-place reload failed');
+      // Nothing was opened, so no player error follows: the server was not
+      // reachable yet. Without this the screen is left on a released player.
+      if (_canReconnect) {
+        _latchFatalPlaybackError(PlaybackFailureAction.reconnect);
+        _awaitReconnect();
+      }
     }
   }
 }
