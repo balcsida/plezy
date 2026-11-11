@@ -1871,7 +1871,7 @@ class _AppShell extends StatelessWidget {
                 behavior: HitTestBehavior.translucent,
                 child: InputModeTracker(
                   child: MaterialApp(
-                    title: t.app.title,
+                    title: PlatformDetector.appTitle(t.app.title),
                     debugShowCheckedModeBanner: false,
                     theme: themeProvider.lightTheme,
                     darkTheme: themeProvider.darkTheme,
