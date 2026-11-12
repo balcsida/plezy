@@ -251,6 +251,29 @@ channels for device evidence.
   a resume re-probes it. The app now treats an unreported wake as that resume.
   `check.sh` passes (302 tests, 3 skipped; 19 Tizen-defined) and the native
   host checks pass 7/7 and 11/11. Device confirmation is pending.
+- The operator then reported periodic hiccups that interrupt playback with
+  loading. No device session was run for it, so the cause below is inferred,
+  not measured. The host forwarded every `BufferingProgressChanged` under
+  100 % as buffering. Samsung's own flutter-tizen video plugins start a wait
+  only at 5 %, and pley, another Samsung TV client, measured that the TV's
+  player reports how full its buffer is and plays on under 100 %. Taken as
+  buffering, that raised the loading spinner over a playing video. Worse, a
+  server that dropped out and returned while the buffer was under 100 % had
+  the screen seek in place to reconnect the stream, which throws the TV's
+  buffer away: a hiccup the buffer had bridged still ended in a reload. The
+  host test reproduces that seek with the old mapping. The percentage is no
+  longer forwarded. A stall is now a position that stood still for 1.5 s
+  while playing, and is logged with its position. Channels are not watched
+  until a trace shows their position runs.
+  The Playback Buffer setting is offered on the TV as well. Large and Extra
+  Large have the TV gather 10 s and 20 s of media before it plays on
+  (`Player.BufferingTime`), which pley measured the TV to wait for after a
+  stall and after every seek too. Auto leaves the TV's own buffering. Both
+  times are guesses. `check.sh` passes (306 tests, 4 skipped; 24
+  Tizen-defined), the full suite passes 7,808 tests (10 skipped), the native
+  host checks pass 9/9 and 11/11, and the bridge compiles against the API-6
+  reference assemblies. Device confirmation is pending: whether the reloads
+  stop, how a stall reads in the log, and what a tier costs on a seek.
 
 ## Verification tiers
 
